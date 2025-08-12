@@ -4,6 +4,12 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch: 
+    inputs:
+      branch:
+        description: 'Branch to run tests on'
+        required: false
+        default: 'main'    
 jobs:
   test:
     timeout-minutes: 60
