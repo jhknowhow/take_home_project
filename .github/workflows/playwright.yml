@@ -1,5 +1,4 @@
-# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-name: "Playwright (Option1: Mock-only Routing)"
+name: Playwright (Option1: Mock-only Routing)
 
 on:
   push:
@@ -19,16 +18,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - mode: mock
-            mock: "true"
-            base_url: "http://api.example.test"
-          - mode: live
-            mock: "false"
-            base_url: "${{ secrets.LIVE_BASE_URL }}"
+        mode: [mock, live]
 
-    # 수동 실행 시에는 입력한 모드만 실행
-    if: ${{ github.event_name != 'workflow_dispatch' || matrix.mode == inputs.mode }}
+    if: ${{ github.event_name == 'workflow_dispatch' ? matrix.mode == github.event.inputs.mode : true }}
 
     env:
       CI: true
@@ -50,11 +42,10 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-
       - name: Run Playwright tests
         env:
-          MOCK: ${{ matrix.mock }}
-          BASE_URL: ${{ matrix.base_url }}
+          MOCK: ${{ matrix.mode == 'mock' ? 'true' : 'false' }}
+          BASE_URL: ${{ matrix.mode == 'mock' ? 'https://api-test.fooddelivery.com' : secrets.LIVE_BASE_URL }}
         run: npx playwright test --reporter=html,line
 
       - name: Upload HTML report
