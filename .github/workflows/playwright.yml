@@ -2,29 +2,25 @@ name: Playwright (Option1: Mock-only Routing)
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ "main", "master" ]
   pull_request:
   workflow_dispatch:
     inputs:
       mode:
-        description: "Run mode (mock | live)"
-        required: false
-        default: "mock"
+        description: "Which mode to run (both | mock | live)"
+        required: true
+        default: "both"
+        type: choice
+        options:
+          - both
+          - mock
+          - live
 
 jobs:
-  tests:
+  # --- MOCK MODE ---
+  tests-mock:
+    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.mode == 'both' || github.event.inputs.mode == 'mock' }}
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        mode: [mock, live]
-
-    if: ${{ github.event_name == 'workflow_dispatch' ? matrix.mode == github.event.inputs.mode : true }}
-
-    env:
-      CI: true
-      NODE_ENV: test
 
     steps:
       - name: Checkout
@@ -42,16 +38,58 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      - name: Run Playwright tests
+      - name: Run Playwright tests (mock)
         env:
-          MOCK: ${{ matrix.mode == 'mock' ? 'true' : 'false' }}
-          BASE_URL: ${{ matrix.mode == 'mock' ? 'https://api-test.fooddelivery.com' : secrets.LIVE_BASE_URL }}
+          MOCK: "true"                            
+          BASE_URL: "https://api-test.fooddelivery.com"
+          CI: "true"
+          NODE_ENV: "test"
         run: npx playwright test --reporter=html,line
 
-      - name: Upload HTML report
+      - name: Upload HTML report (mock)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report-${{ matrix.mode }}
+          name: playwright-report-mock
+          path: playwright-report
+          retention-days: 7
+
+  # --- LIVE MODE ---
+  tests-live:
+    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.mode == 'both' || github.event.inputs.mode == 'live' }}
+    runs-on: ubuntu-latest
+    env:
+      #BASE_URL: ${{ secrets.LIVE_BASE_URL }}  리얼환경에서 추후 secrets 등록후 사용
+      BASE_URL: "https://api-test.fooddelivery.com"
+      
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests (live)
+        env:
+          MOCK: "false"
+          BASE_URL: ${{ env.BASE_URL }}
+          CI: "true"
+          NODE_ENV: "test"
+        run: npx playwright test --reporter=html,line
+
+      - name: Upload HTML report (live)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-live
           path: playwright-report
           retention-days: 7
