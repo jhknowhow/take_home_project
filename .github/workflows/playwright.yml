@@ -1,33 +1,66 @@
-name: Playwright Tests
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: "Playwright (Option1: Mock-only Routing)"
+
 on:
   push:
     branches: [ main, master ]
   pull_request:
-    branches: [ main, master ]
-  workflow_dispatch: 
+  workflow_dispatch:
     inputs:
-      branch:
-        description: 'Branch to run tests on'
+      mode:
+        description: "Run mode (mock | live)"
         required: false
-        default: 'main'    
+        default: "mock"
+
 jobs:
-  test:
-    timeout-minutes: 60
+  tests:
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mode: mock
+            mock: "true"
+            base_url: "http://api.example.test"
+          - mode: live
+            mock: "false"
+            base_url: "${{ secrets.LIVE_BASE_URL }}"
+
+    # 수동 실행 시에는 입력한 모드만 실행
+    if: ${{ github.event_name != 'workflow_dispatch' || matrix.mode == inputs.mode }}
+
+    env:
+      CI: true
+      NODE_ENV: test
+
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-    - name: Install dependencies
-      run: npm ci
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
-    - name: Run Playwright tests
-      run: npx playwright test
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+
+      - name: Run Playwright tests
+        env:
+          MOCK: ${{ matrix.mock }}
+          BASE_URL: ${{ matrix.base_url }}
+        run: npx playwright test --reporter=html,line
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.mode }}
+          path: playwright-report
+          retention-days: 7
