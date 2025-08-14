@@ -1,15 +1,25 @@
 const { test, expect } = require('@playwright/test');
 const { wireMockRoutes } = require('./mocks/routes');
+const { callPostApi, callGetApi } = require('./helpers/api-helper');
+
+const MENU_SELECT_URL = '/api/v1/menu/select';
+const ORDER_URL = '/api/v1/order';
+const DOMAIN = 'https://api-test.fooddelivery.com';
+const API_URL = {
+  MENU_SELECT: '/api/v1/menu/select',
+  ORDER: '/api/v1/order'
+}
 
 test.describe('메뉴 예약 API 테스트 - /api/v1/menu/select', () => {
-  const base = 'https://api-test.fooddelivery.com';
-
+  
   test.beforeEach(async ({ page }) => {
-    await wireMockRoutes(page, { base: base });
+    await wireMockRoutes(page, { domain: DOMAIN });
     await page.goto('data:text/html,<meta charset=utf-8>');
   });
 
-  test('POST 정상요청 -> 200', async ({ page }) => {
+  test('예약 성공 -> 200', async ({ page, request }) => {
+    const url = process.env.MOCK ? `${DOMAIN}${API_URL.MENU_SELECT}` : `${DOMAIN}${API_URL.MENU_SELECT}`;
+    
     const payload = {
       "menuId": "menu_001",
       "quantity": 2,
@@ -21,14 +31,7 @@ test.describe('메뉴 예약 API 테스트 - /api/v1/menu/select', () => {
       'Authorization': 'Bearer test-api-token-1234567890' 
     };
 
-    const result = await page.evaluate(async ({ url, body, headers }) => {
-      const r = await fetch(url, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify(body),
-      });
-      return { status: r.status, body: await r.json() };
-    }, { url: `${base}/api/v1/menu/select`, body: payload, headers: headers }); 
+    const result = await callPostApi(page, request, url, payload, headers);
     
      expect(result.status).toBe(200);
      expect(result.body.status).toBe('SUCCESS');
@@ -37,5 +40,26 @@ test.describe('메뉴 예약 API 테스트 - /api/v1/menu/select', () => {
      expect(result.body.data.menuId).toBe('menu_001');
      expect(result.body.data.quantity).toBe(2);
   
+  });
+
+  test('예약 실패 -> 400 (MENU_NOT_FOUND): 메뉴가 존재하지 않음', async ({ page, request }) => {
+    const url = process.env.MOCK ? `${DOMAIN}${API_URL.MENU_SELECT}/400/MENU_NOT_FOUND` : `${DOMAIN}${API_URL.MENU_SELECT}`;
+
+    const payload = {
+      "menuId": "menu_001_not_found",
+      "quantity": 2,
+      "shopId": "shop_001",
+      "memberNo": "member_123"
+    }
+    const headers = { 
+      'content-type': 'application/json', 
+      'Authorization': 'Bearer test-api-token-1234567890' 
+    };
+
+    const result = await callPostApi(page, request, url, payload, headers);
+    
+    expect(result.status).toBe(400);
+    expect(result.body.errorCode).toBe('MENU_NOT_FOUND');
+    expect(result.body.message).toBe('존재하지 않는 메뉴');
   });
 });

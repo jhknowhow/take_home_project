@@ -1,14 +1,25 @@
-name: Playwright (Mock only)
+name: Playwright Tests
 
 on:
   push:
     branches: [ "main", "master" ]
   pull_request:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: '테스트 환경 선택'
+        required: true
+        default: 'mock'
+        type: choice
+        options:
+          - mock
+          - real
+          - both
 
 jobs:
   tests-mock:
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'mock' || github.event.inputs.environment == 'both') || github.event_name != 'workflow_dispatch'
     env:
       CI: "true"
       NODE_ENV: "test"
@@ -39,5 +50,41 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report-mock
+          path: playwright-report
+          retention-days: 7
+
+  tests-real:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'real' || github.event.inputs.environment == 'both')
+    env:
+      CI: "true"
+      NODE_ENV: "test"
+      MOCK: "false"
+      BASE_URL: "https://api-test.fooddelivery.com"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests (real server)
+        run: npx playwright test --reporter=html,line
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-real
           path: playwright-report
           retention-days: 7
