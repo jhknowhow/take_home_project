@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "description": "지원자 : 박준호",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "npx playwright test",
+    "test:mock": "MOCK=true npx playwright test",
+    "test:local": "MOCK=false npx playwright test"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
