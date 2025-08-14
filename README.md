@@ -29,14 +29,14 @@ take_home_project/
 └── test-results/            # 테스트 결과 (자동 생성)
 ```
 
-## Github action으로 실행
+## Github Action으로 실행 (추천)
 
 1. github 저장소 상단 메뉴 Actions 선택
 2. 좌측 Actions > API 테스트 (Playwright) 선택
 3. 본문 > Run workflow 셀렉트 박스 선택
 4. 브랜치 및 테스트 환경 선택 (실세 서버가 없음으로 mock 환경 권장)
 
-## 설치 및 실행 (로컬에서 실행시 선택사항)
+## 로컬 설치 및 실행
 
 ### 1. 의존성 설치
 
