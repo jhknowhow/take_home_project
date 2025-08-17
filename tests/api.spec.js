@@ -33,7 +33,7 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
 
     const result = await callPostApi(page, request, url, payload, headers);
     
-    //응답시간에서 5분 뒤의 시간으로 예약시간 예상하여 검증
+    //응답시간에서 5분 뒤의 시간으로 예약만료시간 예상하여 검증
     const expectedReservationExpiresAt = new Date(new Date(result.body.timestamp).getTime() + 5 * 60 * 1000).toISOString();
 
      expect(result.status).toBe(200); // 응답 코드
@@ -41,7 +41,7 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
      expect(result.body.message).toBe('메뉴 예약이 완료되었습니다.'); // 응답 메시지
      expect(result.body.data.reservationId).toBeDefined(); // 예약ID
      expect(result.body.data.reservationExpiresAt).toBeDefined(); // 예약시간
-     expect(result.body.data.reservationExpiresAt).toBe(expectedReservationExpiresAt); // 예약시간 검증
+     expect(result.body.data.reservationExpiresAt).toBe(expectedReservationExpiresAt); // 예약 만료시간 검증
      expect(result.body.data.menuId).toBe('menu_001'); // 메뉴ID
      expect(result.body.data.quantity).toBe(2); // 수량
   
