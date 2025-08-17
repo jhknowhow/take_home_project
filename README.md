@@ -36,6 +36,9 @@ take_home_project/
 3. 본문 > Run workflow 셀렉트 박스 선택
 4. 브랜치 및 테스트 환경 선택 (실세 서버가 없음으로 mock 환경 권장)
 
+![GithubAction_01](/image/githubaction_01.png)
+
+
 ## 로컬 설치 및 실행
 
 ### 1. 의존성 설치
