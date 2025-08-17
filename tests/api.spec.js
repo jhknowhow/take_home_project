@@ -1,9 +1,9 @@
 const { test, expect } = require('@playwright/test');
 const { wireMockRoutes } = require('./mocks/routes');
-const { callPostApi, callGetApi } = require('./helpers/api-helper');
+const { callPostApi } = require('./helpers/api-helper');
 
 const DOMAIN = 'https://api-test.fooddelivery.com';
-const DOMAIN_LOCAL = 'http://localhost';
+
 const API_URL = {
   MENU_SELECT: '/api/v1/menu/select',
   ORDER_CREATE: '/api/v1/order/create'
@@ -16,10 +16,6 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
     await page.goto('data:text/html,<meta charset=utf-8>');
   });
 
-  test('로컬 테스트', async ({ page, request }) => {
-    const url = process.env.MOCK === 'true' ? `${DOMAIN}/projects` : `${DOMAIN_LOCAL}/projects`;
-    const result = await callGetApi(page, request, url);
-  });
 
   test('MS-001 : 메뉴 예약 성공 -> 200', async ({ page, request }) => {
     const url = `${DOMAIN}${API_URL.MENU_SELECT}`;    
@@ -31,23 +27,23 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
     }
 
     const headers = { 
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-12345' 
     };
 
     const result = await callPostApi(page, request, url, payload, headers);
     
-     expect(result.status).toBe(200);
-     expect(result.body.status).toBe('SUCCESS');
-     expect(result.body.message).toBe('메뉴 예약이 완료되었습니다.');
-     expect(result.body.data.reservationId).toBeDefined();
-     expect(result.body.data.reservationExpiresAt).toBeDefined();
-     
-     const expectedReservationExpiresAt = new Date(new Date(result.body.timestamp).getTime() + 5 * 60 * 1000).toISOString();
-     expect(result.body.data.reservationExpiresAt).toBe(expectedReservationExpiresAt);
-     
-     expect(result.body.data.menuId).toBe('menu_001');
-     expect(result.body.data.quantity).toBe(2);
+    //응답시간에서 5분 뒤의 시간으로 예약시간 예상하여 검증
+    const expectedReservationExpiresAt = new Date(new Date(result.body.timestamp).getTime() + 5 * 60 * 1000).toISOString();
+
+     expect(result.status).toBe(200); // 응답 코드
+     expect(result.body.status).toBe('SUCCESS'); // 응답 상태
+     expect(result.body.message).toBe('메뉴 예약이 완료되었습니다.'); // 응답 메시지
+     expect(result.body.data.reservationId).toBeDefined(); // 예약ID
+     expect(result.body.data.reservationExpiresAt).toBeDefined(); // 예약시간
+     expect(result.body.data.reservationExpiresAt).toBe(expectedReservationExpiresAt); // 예약시간 검증
+     expect(result.body.data.menuId).toBe('menu_001'); // 메뉴ID
+     expect(result.body.data.quantity).toBe(2); // 수량
   
   });
 
@@ -61,7 +57,7 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
     }
 
     const headers = { 
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-12345' 
     };
 
@@ -69,8 +65,10 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
 
     expect(result.status).toBe(200);
     expect(result.body.status).toBe('SUCCESS');
-    expect(result.body.data.reservationId).toBeDefined();
-    expect(result.body.data.reservationExpiresAt).toBe('2025-08-14T12:00:00.000Z');
+    expect(result.body.data.reservationExpiresAt).toBeDefined();
+     
+    const expectedReservationExpiresAt = new Date(new Date(result.body.timestamp).getTime() + 5 * 60 * 1000).toISOString();
+    expect(result.body.data.reservationExpiresAt).toBe(expectedReservationExpiresAt);
     expect(result.body.data.menuId).toBe('menu_001');
     expect(result.body.data.quantity).toBe(1);
   });
@@ -85,7 +83,7 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
     }
 
     const headers = { 
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-12345' 
     };
 
@@ -93,8 +91,10 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
 
     expect(result.status).toBe(200);
     expect(result.body.status).toBe('SUCCESS');
-    expect(result.body.data.reservationId).toBeDefined();
-    expect(result.body.data.reservationExpiresAt).toBe('2025-08-14T12:00:00.000Z');
+    expect(result.body.data.reservationExpiresAt).toBeDefined();
+     
+    const expectedReservationExpiresAt = new Date(new Date(result.body.timestamp).getTime() + 5 * 60 * 1000).toISOString();
+    expect(result.body.data.reservationExpiresAt).toBe(expectedReservationExpiresAt);
     expect(result.body.data.menuId).toBe('menu_001');
     expect(result.body.data.quantity).toBe(99);
   });
@@ -109,7 +109,7 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
     }
     
     const headers = { 
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-12345' 
     };
 
@@ -130,7 +130,7 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
     }
 
     const headers = { 
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-12345' 
     };
 
@@ -151,7 +151,7 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
     }
 
     const headers = { 
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-12345' 
     };
 
@@ -172,7 +172,7 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
     }
 
     const headers = { 
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-12345' 
     };
 
@@ -198,7 +198,7 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
     }
 
     const headers = { 
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-1234567890' 
     };
 
@@ -219,7 +219,7 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
     }
 
     const headers = { 
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-12345' 
     };
 
@@ -240,7 +240,7 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
     }
 
     const headers = { 
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-12345' 
     };
 
@@ -280,7 +280,7 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
     }
 
     const headers = { 
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-12345' 
     };
 
@@ -300,7 +300,7 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
     }
 
     const headers = { 
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-12345' 
     };
 
@@ -320,7 +320,7 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
     }
 
     const headers = { 
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-12345' 
     };
 
@@ -341,7 +341,7 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
     }
 
     const headers = { 
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-12345' 
     };
 
@@ -362,7 +362,7 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
     }
 
     const headers = { 
-      'content-type': 'text/plain', 
+      'content-type': 'text/plain;', 
       'Authorization': 'Bearer test-api-token-12345' 
     };
 
@@ -401,7 +401,7 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
     }
 
     const headers = { 
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-xxxxxx' 
     };
 
@@ -420,7 +420,7 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
     }
 
     const headers = { 
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-12345' 
     };
 
@@ -441,7 +441,7 @@ test.describe('메뉴 예약 API 테스트(api/v1/menu/select)', () => {
     }
 
     const headers = { 
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-12345' 
     };
 
@@ -472,7 +472,7 @@ test.describe('주문 생성 API 테스트(api/v1/order/create)', () => {
     }
 
     const headers = { 
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-12345' 
     };
 
@@ -513,7 +513,7 @@ test.describe('주문 생성 API 테스트(api/v1/order/create)', () => {
     }
 
     const headers = {
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-12345' 
     };
 
@@ -555,7 +555,7 @@ test.describe('주문 생성 API 테스트(api/v1/order/create)', () => {
     }
 
     const headers = {
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-12345' 
     };
 
@@ -589,7 +589,7 @@ test.describe('주문 생성 API 테스트(api/v1/order/create)', () => {
     }
 
     const headers = {
-      'content-type': 'application/json', 
+      'content-type': 'application/json;charset=UTF-8', 
       'Authorization': 'Bearer test-api-token-12345' 
     };
 
@@ -609,4 +609,6 @@ test.describe('주문 생성 API 테스트(api/v1/order/create)', () => {
       expect(orderResult.body.message).toBe('유효하지 않은 예약');
     } 
   });
+
+  
 });

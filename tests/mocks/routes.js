@@ -6,15 +6,6 @@ async function wireMockRoutes(page) {
       return { base, mock };
     }
 
-    await page.route(`${base}/projects`, async route => {
-        const req = route.request();
-        if (req.method() !== 'GET') return route.fallback();
-        return route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify({ message: 'Hello, world!' }),
-        });
-    });
 
     await page.route(`${base}/api/v1/menu/select`, async route => {
         const req = route.request();
