@@ -20,19 +20,74 @@ take_home_project/
 ├── package.json              # 프로젝트 설정 및 의존성
 ├── playwright.config.js      # Playwright 설정
 ├── tests/
-│   ├── api.spec.js          # 메인 API 테스트 파일
+│   ├── api.spec.js          # 메인 API 테스트 케이스 파일
 │   ├── helpers/
-│   │   └── api-helper.js    # API 호출 헬퍼 함수
+│   │   └── api-helper.js    # API 호출 헬퍼 함수 (mock 모드일때는 미리 정의된 url로 호출. 아닐때는 실서버 호출)
 │   └── mocks/
-│       └── routes.js        # Mock 라우트 설정
+│       └── routes.js        # Mock 라우트 설정 (mock 모드일때 테스트 케이스별 url 정의)
 ├── playwright-report/        # 테스트 리포트 (자동 생성)
 └── test-results/            # 테스트 결과 (자동 생성)
 ```
 
+## 동작 방식 및 고려사항
 
-# 실행방법
+실제 API 서버가 존재하지 않음으로 모킹환경을 구성하여 실행
 
-### GithubAction 이나 로컬 실행 2가지중 선택하여 실행행
+```
+모킹환경은 Playwright route API를 사용하여 구현하였으며, 실제 API 서버를 호출하는것이 아니라 네트워크 요청을 가로채어 미리 정의된 응답값을 반환하도록 하였습니다. 이를 통해 성공, 실패, 에러 등 다양한 테스트 케이스를 API 서버 없이 동작가능하도록 하였습니다.
+```
+
+
+#### api.spec.js
+
+각 테스트 케이스별로 mock 모드일때 url을 분기
+
+```
+const url = process.env.MOCK === 'true' ? `${DOMAIN}${API_URL.MENU_SELECT}/200/QUANTITY_MIN_BOUND` : `${DOMAIN}${API_URL.MENU_SELECT}`;
+```
+
+#### route.js
+
+모킹모드일 경우만 route 동작하며 테스트 케이스별 URL 및 응답값 정의
+
+```
+    //MS-002
+    await page.route(`${base}/api/v1/menu/select/200/QUANTITY_MIN_BOUND`, async route => {
+
+        const req = route.request();
+        if (req.method() !== 'POST') return route.fallback();
+
+        const mockResponseBody = {
+            status: 'SUCCESS',
+            message: '메뉴 예약이 완료되었습니다.',
+            timestamp: new Date().toISOString(),
+            data: { 
+                reservationId:"RSV_A7K9M2X8",
+                reservationExpiresAt: "2025-08-14T12:00:00.000Z",
+                menuId: "menu_001",
+                quantity: 1,
+            }
+        }
+
+        return route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify(mockResponseBody),
+        });
+    });
+```
+
+
+
+
+
+
+
+
+
+## 실행방법
+
+> GithubAction 이나 로컬 실행 2가지중 선택하여 실행
 
 ### Github Action으로 실행 (추천)
 
@@ -65,7 +120,7 @@ npm run test:mock
 
 #### 실제 API 환경에서 테스트 실행
 ```bash
-npm run test:local
+npm run test:qa
 ```
 
 #### 기본 테스트 실행
