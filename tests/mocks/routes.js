@@ -49,13 +49,16 @@ async function wireMockRoutes(page) {
         const req = route.request();
         if (req.method() !== 'POST') return route.fallback();
 
+        const timestamp = new Date();
+        const reservationExpiresAt = new Date(timestamp.getTime() + 5 * 60 * 1000).toISOString();
+
         const mockResponseBody = {
             status: 'SUCCESS',
             message: '메뉴 예약이 완료되었습니다.',
-            timestamp: new Date().toISOString(),
+            timestamp: timestamp.toISOString(),
             data: { 
                 reservationId:"RSV_A7K9M2X8",
-                reservationExpiresAt: "2025-08-14T12:00:00.000Z",
+                reservationExpiresAt: reservationExpiresAt,
                 menuId: "menu_001",
                 quantity: 1,
             }
@@ -73,13 +76,16 @@ async function wireMockRoutes(page) {
         const req = route.request();
         if (req.method() !== 'POST') return route.fallback();
 
+        const timestamp = new Date();
+        const reservationExpiresAt = new Date(timestamp.getTime() + 5 * 60 * 1000).toISOString();
+
         const mockResponseBody = {
             status: 'SUCCESS',
             message: '메뉴 예약이 완료되었습니다.',
-            timestamp: new Date().toISOString(),
+            timestamp: timestamp.toISOString(),
             data: { 
                 reservationId:"RSV_A7K9M2X8",
-                reservationExpiresAt: "2025-08-14T12:00:00.000Z",
+                reservationExpiresAt: reservationExpiresAt,
                 menuId: "menu_001",
                 quantity: 99,
             }
